@@ -119,8 +119,16 @@
     rt = (e, n = d, o = t) => o.dispatchEvent(new CustomEvent(n, e)),
     at = (t, e) => rt({ detail: JSON.stringify({ type: t, value: e }) }),
     ct = () => at("counts", z.counts);
+    
   function st(t, n) {
-    e.querySelectorAll(t).forEach((t) => (t.checked = n));
+    e.querySelectorAll(t).forEach((cb) => {
+        cb.checked = n;
+        if (n) {
+            cb.setAttribute('checked', '');
+        } else {
+            cb.removeAttribute('checked');
+        }
+    });
   }
   function dt() {
     st(x, !0), kt.l();
@@ -960,7 +968,11 @@
                     return !o;
                   })(t, n);
                   t > n && ([t, n] = [n, t]);
-                  for (let i = t; i <= n; i++) e.at(i).checked = o;
+                  for (let i = t; i <= n; i++) {
+                      e.at(i).checked = o;
+                      if(o) e.at(i).setAttribute('checked', '');
+                      else e.at(i).removeAttribute('checked');
+                  }
                   kt.l();
                 },
                 a = (t, n) => {
@@ -1021,7 +1033,7 @@
                   const r = e.indexOf(t);
                   if (-1 !== r)
                     $t.j(n(r)),
-                      i && (c = t) && ((c.checked = !c.checked), kt.l());
+                      i && (c = t) && ((c.checked = !c.checked), c.checked ? c.setAttribute('checked', '') : c.removeAttribute('checked'), kt.l());
                   else {
                     const n = $t.B;
                     $t.j(
@@ -1083,7 +1095,7 @@
                 case "Delete":
                   return void (
                     (X() || W()) &&
-                    (!Y() && $t.J && (($t.B.checked = !0), $t.U(), kt.l()),
+                    (!Y() && $t.J && (($t.B.checked = !0), $t.B.setAttribute('checked', ''), $t.U(), kt.l()),
                     Y() && (_t(t), St(o)))
                   );
               }
@@ -1128,86 +1140,16 @@
                 $t.F(),
                 kt.tt(),
                 wt.tt(),
-                Xt.$t())
-              : (Zt.st(), kt.l()));
+                Xt.$t(),
+                It.tt())
+              : (Zt.st(), kt.l(), It.st()));
       };
-    })(),
-    Tt = (function () {
-      const t = {},
-        n = h,
-        o = `<${n}></${n}>`,
-        i = (t = n) => {
-          customElements.get(t) ||
-            Polymer({
-              is: t,
-              _template: () => {
-                const t = e.createElement("template");
-                return (
-                  (t.innerHTML = safeHTML(`<tp-yt-paper-checkbox id="${g}" class="${g}" on-tap="onTap" on-contextmenu="onContextMenu"></tp-yt-paper-checkbox>`)),
-                  t
-                );
-              },
-              attached() {
-                !O && kt.l();
-              },
-              detached() {
-                !O && kt.l();
-              },
-              onTap(t) {
-                $t.j(),
-                  tt(t.detail.sourceEvent) &&
-                    ((t = $t.B) => {
-                      const e = $t.G,
-                        n = [...P()];
-                      let o = e ? n.indexOf(e) : 0,
-                        i = n.indexOf(t);
-                      -1 === o && (o = 0), o > i && ([o, i] = [i, o]);
-                      for (let e = o; e <= i; e++) n[e].checked = t.checked;
-                    })(t.target),
-                  kt.l();
-              },
-              onContextMenu(t) {
-                $t.j(), _t(t), gt.ot(t.clientX, t.clientY);
-              },
-            });
-        },
-        r = (t) => {
-          const e = customElements.get(t)?.generatedFrom?._template;
-          return "function" == typeof e ? e() : e;
-        },
-        a = (n, i) => {
-          t[n] = i;
-          const r = i.content?.lastElementChild;
-          r && r.insertAdjacentHTML("afterend", safeHTML(o)),
-            ((t) => {
-              const n = e.querySelectorAll(t);
-              n.length &&
-                (n.length,
-                n.forEach((t) => t.insertAdjacentHTML("beforeend", safeHTML(o))));
-            })(n);
-        };
-      return {
-        tt(t) {
-          i();
-          const e = r(t);
-          e
-            ? a(t, e)
-            : ht(t).then((e) => {
-                const n = e.polymerController || e.inst;
-                a(t, n?._template);
-              });
-        },
-        st(e) {
-          const n = r(e) || t[e];
-          n && ((n.innerHTML = safeHTML(n.innerHTML.replace(o, ""))), delete t[e]);
-        },
-        get yt() {
-          return n;
-        },
-      };
-    })(),
-    It = (function () {
-      const t = [
+    })();
+    
+    // Completely rebuilt injection layer dropping YouTube Polymer dependencies
+    const Tt = { get yt() { return h; }, st(e) {}, tt(t) {} }; // Safely stubbed
+    const It = (function () {
+      const videoSelectors = [
           "ytd-rich-grid-media",
           "ytd-rich-item-renderer",
           "ytd-rich-grid-slim-media",
@@ -1216,28 +1158,98 @@
           "ytd-grid-video-renderer",
           "ytd-playlist-video-renderer",
           "ytd-compact-video-renderer",
-        ],
-        n = [],
-        o = (t) => {
-          n[t] && (Tt.st(t), delete n[t]);
-        };
+      ];
+      let observer = null;
+      
+      const inject = (node) => {
+          if (!node.querySelector(h)) {
+              node.insertAdjacentHTML('beforeend', safeHTML(`<${h}></${h}>`));
+          }
+      };
+      
       return {
         tt() {
-          t.forEach((t) =>
-            customElements.whenDefined(t).then(() =>
-              ((t) => {
-                Tt.tt(t), n.push(t);
-              })(t)
-            )
-          );
+          // Native Custom Element using vanilla DOM (ignores YouTube framework)
+          if (!customElements.get(h)) {
+              class MsfyWrapper extends HTMLElement {
+                  connectedCallback() {
+                      if (this.dataset.init) return;
+                      this.dataset.init = '1';
+                      this.innerHTML = safeHTML(`
+                          <tp-yt-paper-checkbox id="${g}" class="${g}">
+                              <div id="checkboxContainer">
+                                  <div id="checkbox"><div id="checkmark">✔</div></div>
+                              </div>
+                          </tp-yt-paper-checkbox>
+                      `);
+                      
+                      const cb = this.querySelector(`#${g}`);
+                      if (cb) {
+                          cb.addEventListener('click', (e) => {
+                              e.preventDefault(); e.stopPropagation();
+                              const isChecked = cb.hasAttribute('checked');
+                              
+                              if (isChecked) {
+                                  cb.removeAttribute('checked'); cb.checked = false;
+                              } else {
+                                  cb.setAttribute('checked', ''); cb.checked = true;
+                              }
+                              
+                              $t.j();
+                              if (tt(e)) {
+                                  const n = $t.G;
+                                  const o = [...P()];
+                                  let i = n ? o.indexOf(n) : 0;
+                                  let r = o.indexOf(cb);
+                                  if (i === -1) i = 0;
+                                  if (i > r) { let temp = i; i = r; r = temp; }
+                                  for (let k = i; k <= r; k++) {
+                                      if (!isChecked) {
+                                          o[k].setAttribute('checked', ''); o[k].checked = true;
+                                      } else {
+                                          o[k].removeAttribute('checked'); o[k].checked = false;
+                                      }
+                                  }
+                              }
+                              kt.l();
+                          });
+                          cb.addEventListener('contextmenu', (e) => {
+                              $t.j(); _t(e); gt.ot(e.clientX, e.clientY);
+                          });
+                      }
+                  }
+              }
+              customElements.define(h, MsfyWrapper);
+          }
+
+          const sel = videoSelectors.join(',');
+          e.querySelectorAll(sel).forEach(inject);
+
+          // Watch for newly loaded videos on scroll
+          observer = new MutationObserver((mutations) => {
+              for (const mutation of mutations) {
+                  for (const node of mutation.addedNodes) {
+                      if (node.nodeType === 1) {
+                          if (videoSelectors.includes(node.tagName.toLowerCase())) {
+                              inject(node);
+                          }
+                          node.querySelectorAll(sel).forEach(inject);
+                      }
+                  }
+              }
+          });
+          observer.observe(e.body, { childList: true, subtree: true });
         },
         st() {
-          n.forEach(o),
-            (n.length = 0),
-            e.querySelectorAll(h).forEach((t) => t.remove());
+          if (observer) {
+              observer.disconnect();
+              observer = null;
+          }
+          e.querySelectorAll(h).forEach(t => t.remove());
         },
       };
     })();
+
   function At() {
     const t = j(N());
     if (t && t.resolveCommand) {
@@ -1426,7 +1438,7 @@
     for (let o = 0; o < t.length; o++) {
       const i = t[o],
         r = j(i).data.videoId;
-      r && ((e[r] = (e[r] || 0) + 1), e[r] > 1 && ((i.checked = !0), (n = !0)));
+      r && ((e[r] = (e[r] || 0) + 1), e[r] > 1 && ((i.checked = !0), i.setAttribute('checked', ''), (n = !0)));
     }
     !n && Kt("👍   " + L.messages.noDuplicatesFound), kt.l();
   }
@@ -1741,16 +1753,17 @@
                 `@keyframes ${wt.dt} { from { opacity: 1; } to { opacity: 0; transform: scale(2); } }`,
                 `#${wt.dt} { background: ${_}; animation: ${wt.dt} 0.5s linear forwards; position: fixed; left: 50%; top: 50%; width: ${M}px; height: ${M}px; margin-left: -${C}px; margin-top: -${C}px; border-radius: ${C}px; z-index: 2030; pointer-events: none; display: none; }`,
                 `#${wt.dt} #icon { width: 40px; height: 40px; margin: 6px; display: flex; align-items: center; justify-content: center; }`,
-                `${x} { --paper-checkbox-size: 40px; --paper-checkbox-ink-size: 40px; border-radius: ${k}; width: 100%; height: 100%; display: flex; align-items: end; justify-content: end; }`,
-                `${x} > #checkboxContainer { border-bottom-right-radius: ${k}; }`,
-                `${x} > #checkboxContainer > #checkbox { border-bottom-right-radius: ${k}; transition: none; }`,
-                `${x} > #checkboxContainer > #checkbox > #checkmark { animation: checkmark-expand 40ms ease-out forwards; }`,
-                `${x} > #checkboxLabel { display: none; }`,
-                `${x}:not([checked]) > #checkboxContainer { display: none; }`,
+                
+                // Rebuilt Independent CSS for Checkboxes
+                `${x} { border-radius: ${k}; width: 100%; height: 100%; display: flex; align-items: end; justify-content: end; padding: 6px; box-sizing: border-box; }`,
+                `${x} > #checkboxContainer { background: rgba(0,0,0,0.7); width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; border: 2px solid transparent; }`,
+                `${x} > #checkboxContainer > #checkbox { display: flex; }`,
+                `${x} > #checkboxContainer > #checkbox > #checkmark { color: white; font-size: 16px; display: none; margin-top: -2px; }`,
                 `${x}[checked] { background-color: rgba(62, 166, 255, 0.4); }`,
-                `${x}:focus { outline: cyan solid ${l}px; outline-offset: -${l}px }`,
-                `ytd-grid-video-renderer[is-dismissed] > ${h}, ytd-rich-item-renderer[is-dismissed] > ${h}, ytd-video-renderer[is-hidden] > ${h}, ytd-video-renderer[is-dismissed] > ${h}, ytd-compact-video-renderer[is-dismissed] > ${h}, ytd-reel-item-renderer[is-dismissed] > ${h} { display: none; }`,
-                `${h} { border-radius: ${k}; position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: 9999 !important; pointer-events: auto !important; cursor: pointer; display: none; }`,
+                `${x}[checked] > #checkboxContainer { border-color: #3ea6ff; background: rgba(0,0,0,0.8); }`,
+                `${x}[checked] > #checkboxContainer > #checkbox > #checkmark { display: block; }`,
+                `${h} { position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: 9999 !important; pointer-events: auto !important; cursor: pointer; display: flex !important; border-radius: ${k}; }`,
+                `ytd-grid-video-renderer[is-dismissed] > ${h}, ytd-rich-item-renderer[is-dismissed] > ${h}, ytd-video-renderer[is-hidden] > ${h}, ytd-video-renderer[is-dismissed] > ${h}, ytd-compact-video-renderer[is-dismissed] > ${h}, ytd-reel-item-renderer[is-dismissed] > ${h} { display: none !important; }`,
               ],
               V = n.sheet,
               D = V.cssRules.length;
@@ -2386,12 +2399,12 @@
                         n =
                           t?.thumbnailOverlayResumePlaybackRenderer
                             ?.percentDurationWatched;
-                      (e ? n >= o : n < o) && (r.checked = !0);
+                      (e ? n >= o : n < o) && (r.checked = !0, r.setAttribute('checked', ''));
                     } else {
                       const t =
                         a?.[n]?.runs?.map((t) => t.text).join("") ||
                         ("title" === n ? a?.headline?.simpleText : "");
-                      o.test(t) && (r.checked = !0);
+                      o.test(t) && (r.checked = !0, r.setAttribute('checked', ''));
                     }
                   }
                   kt.l();
