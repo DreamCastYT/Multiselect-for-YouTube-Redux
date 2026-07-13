@@ -1,6 +1,18 @@
 "use strict";
 !(function (t, e) {
   if (!("customElements" in t)) return;
+
+  // Trusted Types Policy Fix
+  let msfyPolicy = { createHTML: (s) => s };
+  if (window.trustedTypes && window.trustedTypes.createPolicy) {
+    try {
+      msfyPolicy = window.trustedTypes.createPolicy('msfy-policy', {
+        createHTML: (string) => string
+      });
+    } catch (err) {}
+  }
+  const safeHTML = (str) => msfyPolicy.createHTML(str);
+
   const n = "https://www.youtube.com",
     o = "ACTION_ADD_VIDEO",
     i = "ACTION_REMOVE_VIDEO_BY_VIDEO_ID",
@@ -378,7 +390,7 @@
           (o = e.createElement("div")), (o.id = T);
           const t = et(I, "close") + nt(I, L.messages.close),
             i = `<header>${`<span id="title">${L.messages.loadingEntirePlaylist}</span>`}${t}</header>`;
-          (o.innerHTML = `${i}<div></div>`),
+          (o.innerHTML = safeHTML(`${i}<div></div>`)),
             o.querySelector("#" + I).addEventListener("tap", () => (n = !0)),
             e.body.appendChild(o);
         }
@@ -403,7 +415,7 @@
             const e = t?.header?.playlistHeaderRenderer?.numVideosText?.runs;
             if (Array.isArray(e))
               for (const t of e) {
-                const e = +t.text?.replace(/[. , ]/g, "");
+                const e = +t.text?.replace(/[. , ]/g, "");
                 if (!isNaN(e)) return e;
               }
             return 5e3;
@@ -623,14 +635,14 @@
               (!(function (r, a, c) {
                 (o = e.createElement("div")),
                   (o.id = n),
-                  (o.innerHTML = `<div id="listbox" class="${$}" tabindex="-1">${r
+                  (o.innerHTML = safeHTML(`<div id="listbox" class="${$}" tabindex="-1">${r
                     .map(({ id: t, icon: e, label: n, separator: o }) => {
                       const i = o?.();
                       return `<div class="${y}" tabindex="-1" ${
                         i ? `separator="${i}"` : ""
                       }><div id="${t}" tabindex="0"><yt-icon icon="${e}"></yt-icon>${n()}</div></div>`;
                     })
-                    .join("")}</div>`),
+                    .join("")}</div>`)),
                   p
                     ? ((o.className = s + "-context-menu"),
                       o.style.setProperty("--x", a + t.scrollX + "px"),
@@ -671,10 +683,10 @@
             (o = e.createElement("dialog")),
               (o.id = t),
               (o.className = m),
-              (o.innerHTML = (() => {
+              (o.innerHTML = safeHTML((() => {
                 const t = L.messages;
                 return `<form method="dialog"><header></header><section>${t.confirmRemoveContent}</section><footer><button id="cancel">${t.cancel}</button><button id="submit">${t.remove}</button></footer></form>`;
-              })());
+              })()));
             const n = o.querySelector("button#cancel"),
               i = o.querySelector("button#submit");
             n.addEventListener("tap", (t) => a(!1)),
@@ -725,7 +737,7 @@
           (n = e.createElement("div")), (n.id = t);
           const i = ot(z.outlineIcon),
             r = L.messages.extensionName;
-          (n.innerHTML = `<yt-icon-button id="button">${i}</yt-icon-button><tp-yt-paper-tooltip>${r}</tp-yt-paper-tooltip>`),
+          (n.innerHTML = safeHTML(`<yt-icon-button id="button">${i}</yt-icon-button><tp-yt-paper-tooltip>${r}</tp-yt-paper-tooltip>`)),
             n.firstElementChild.addEventListener("tap", (t) => Et(), !0),
             o.insertBefore(n, o.firstElementChild);
         }
@@ -767,7 +779,7 @@
           if (n) {
             const o = e.querySelector(`iron-iconset-svg #content-${t} path`);
             o &&
-              ((n.innerHTML = `<div id="icon"><svg fill="#fff" viewBox="0 0 24 24" width="80%" height="80%">${o.outerHTML}</svg></div>`),
+              ((n.innerHTML = safeHTML(`<div id="icon"><svg fill="#fff" viewBox="0 0 24 24" width="80%" height="80%">${o.outerHTML}</svg></div>`)),
               (n.style.display = "block"));
           }
         },
@@ -881,7 +893,7 @@
               const t = h.reduce((t, e) => t + e.html(), "");
               (r = e.createElement("div")),
                 (r.id = o),
-                (r.innerHTML = `<div id="drag-handle"><hr><hr></div><div id="content" tabindex="0">${t}</div>`),
+                (r.innerHTML = safeHTML(`<div id="drag-handle"><hr><hr></div><div id="content" tabindex="0">${t}</div>`)),
                 e.body.appendChild(r),
                 h.forEach((t) => (t.node = r.querySelector("#" + t.id))),
                 m(),
@@ -1093,11 +1105,12 @@
           `#${vt.dt} > #button:hover { background-color: rgb(0, 204, 204); }`,
           `#${vt.dt} > #button > button:focus { border-radius: 50%; background-color: rgb(191, 255, 255); }`,
           "ytd-playlist-video-renderer { position: relative; }",
+          "ytd-rich-item-renderer { position: relative; }",
           "ytd-radio-renderer { pointer-events: none; }",
-          "#content.ytd-playlist-video-renderer, #dismissible.ytd-video-renderer, #dismissible.ytd-rich-grid-media, #dismissible.ytd-grid-video-renderer, #dismissible.ytd-compact-video-renderer { pointer-events: none; }",
-          "#menu.ytd-playlist-video-renderer, #menu.ytd-video-renderer, #menu.ytd-rich-grid-media, #menu.ytd-grid-video-renderer, #menu.ytd-compact-video-renderer, #menu.ytd-reel-shelf-renderer { pointer-events: none; opacity: 0; }",
+          "#content.ytd-playlist-video-renderer, #dismissible.ytd-video-renderer, #dismissible.ytd-rich-grid-media, #dismissible.ytd-rich-item-renderer, #dismissible.ytd-grid-video-renderer, #dismissible.ytd-compact-video-renderer { pointer-events: none; }",
+          "#menu.ytd-playlist-video-renderer, #menu.ytd-video-renderer, #menu.ytd-rich-grid-media, #menu.ytd-rich-item-renderer, #menu.ytd-grid-video-renderer, #menu.ytd-compact-video-renderer, #menu.ytd-reel-shelf-renderer { pointer-events: none; opacity: 0; }",
           "#reorder.ytd-playlist-video-renderer, #mouseover-overlay.ytd-thumbnail, #hover-overlays.ytd-thumbnail { display: none; }",
-          `#interaction.ytd-video-renderer > .yt-interaction, #interaction.ytd-grid-video-renderer > .yt-interaction, #interaction.ytd-compact-video-renderer > .yt-interaction { border-radius: ${k}; }`,
+          `#interaction.ytd-video-renderer > .yt-interaction, #interaction.ytd-grid-video-renderer > .yt-interaction, #interaction.ytd-compact-video-renderer > .yt-interaction, #interaction.ytd-rich-item-renderer > .yt-interaction { border-radius: ${k}; }`,
           "body { user-select: none; }",
         ];
       let i = !1;
@@ -1130,7 +1143,7 @@
               _template: () => {
                 const t = e.createElement("template");
                 return (
-                  (t.innerHTML = `<tp-yt-paper-checkbox id="${g}" class="${g}" on-tap="onTap" on-contextmenu="onContextMenu"></tp-yt-paper-checkbox>`),
+                  (t.innerHTML = safeHTML(`<tp-yt-paper-checkbox id="${g}" class="${g}" on-tap="onTap" on-contextmenu="onContextMenu"></tp-yt-paper-checkbox>`)),
                   t
                 );
               },
@@ -1165,12 +1178,12 @@
         a = (n, i) => {
           t[n] = i;
           const r = i.content?.lastElementChild;
-          r && r.insertAdjacentHTML("afterend", o),
+          r && r.insertAdjacentHTML("afterend", safeHTML(o)),
             ((t) => {
               const n = e.querySelectorAll(t);
               n.length &&
                 (n.length,
-                n.forEach((t) => t.insertAdjacentHTML("beforeend", o)));
+                n.forEach((t) => t.insertAdjacentHTML("beforeend", safeHTML(o))));
             })(n);
         };
       return {
@@ -1186,7 +1199,7 @@
         },
         st(e) {
           const n = r(e) || t[e];
-          n && ((n.innerHTML = n.innerHTML.replace(o, "")), delete t[e]);
+          n && ((n.innerHTML = safeHTML(n.innerHTML.replace(o, ""))), delete t[e]);
         },
         get yt() {
           return n;
@@ -1196,6 +1209,7 @@
     It = (function () {
       const t = [
           "ytd-rich-grid-media",
+          "ytd-rich-item-renderer",
           "ytd-rich-grid-slim-media",
           "ytd-video-renderer",
           "ytd-reel-item-renderer",
@@ -1432,14 +1446,14 @@
           (o = e.createElement("dialog")),
             (o.id = t),
             (o.className = m),
-            (o.innerHTML = (() => {
+            (o.innerHTML = safeHTML((() => {
               const t = L.messages;
               return `<form method="dialog"><header></header><section><label><input type="radio" name="type" value="0" checked>JSON</label><label><input type="radio" name="type" value="1">TEXT</label><label><input type="radio" name="type" value="2">HTML</label></section><footer><button id="cancel">${
                 t.cancel
               }</button><button id="submit">${
                 t.save || "Speichern"
               }</button></footer></form>`;
-            })());
+            })()));
           const n = o.querySelector("button#cancel"),
             i = o.querySelector("button#submit");
           n.addEventListener("tap", (t) => d(-1)),
@@ -1564,9 +1578,7 @@
       e.body.appendChild(t),
       t.click();
   }
-  const policy = window.trustedTypes.createPolicy('default', {
-    createHTML: (string) => string
-  });
+  
   const Ut = r
       ? (function () {
           function t(t) {
@@ -1737,8 +1749,8 @@
                 `${x}:not([checked]) > #checkboxContainer { display: none; }`,
                 `${x}[checked] { background-color: rgba(62, 166, 255, 0.4); }`,
                 `${x}:focus { outline: cyan solid ${l}px; outline-offset: -${l}px }`,
-                `${h} { border-radius: ${k}; position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: 1; cursor: pointer; display: none; }`,
-                `ytd-grid-video-renderer[is-dismissed] > ${h}, ytd-video-renderer[is-hidden] > ${h}, ytd-video-renderer[is-dismissed] > ${h}, ytd-compact-video-renderer[is-dismissed] > ${h}, ytd-reel-item-renderer[is-dismissed] > ${h} { display: none; }`,
+                `ytd-grid-video-renderer[is-dismissed] > ${h}, ytd-rich-item-renderer[is-dismissed] > ${h}, ytd-video-renderer[is-hidden] > ${h}, ytd-video-renderer[is-dismissed] > ${h}, ytd-compact-video-renderer[is-dismissed] > ${h}, ytd-reel-item-renderer[is-dismissed] > ${h} { display: none; }`,
+                `${h} { border-radius: ${k}; position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: 9999 !important; pointer-events: auto !important; cursor: pointer; display: none; }`,
               ],
               V = n.sheet,
               D = V.cssRules.length;
@@ -1775,7 +1787,7 @@
               i = `<g id="${s}-info"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path></g>`,
               r = `<g id="${s}-select-all"><path d="M18 7l-1.41-1.41-6.34 6.34 1.41 1.41L18 7zm4.24-1.41L11.66 16.17 7.48 12l-1.41 1.41L11.66 19l12-12-1.42-1.41zM.41 13.41L6 19l1.41-1.41L1.83 12 .41 13.41z"></path></g>`,
               a = `<g id="${s}-unselect-all"><path d="M1.79 12l5.58 5.59L5.96 19 .37 13.41 1.79 12zm.45-7.78L12.9 14.89l-1.28 1.28L7.44 12l-1.41 1.41L11.62 19l2.69-2.69 4.89 4.89 1.41-1.41L3.65 2.81 2.24 4.22zm14.9 9.27L23.62 7 22.2 5.59l-6.48 6.48 1.42 1.42zM17.96 7l-1.41-1.41-3.65 3.66 1.41 1.41L17.96 7z"></path></g>`;
-            (t.innerHTML = policy.createHTML(`<svg><defs>${n}${o}${i}${r}${a}</defs></svg>`)),
+            (t.innerHTML = safeHTML(`<svg><defs>${n}${o}${i}${r}${a}</defs></svg>`)),
               e.head.appendChild(t);
           }
         },
@@ -1970,12 +1982,12 @@
                                 (a.dir = r.localeDir),
                                 (a.title = r.clickToClose),
                                 (a.onclick = () => (a.style.display = "none")),
-                                (a.innerHTML = `${ot(
+                                (a.innerHTML = safeHTML(`${ot(
                                   !1,
                                   48
                                 )}<div id="info"><p>${r.extensionName}</p>${
                                   r.reloadRequired
-                                }</div>`),
+                                }</div>`)),
                                 e.body.appendChild(a);
                             } catch (t) {}
                         })();
@@ -2192,14 +2204,14 @@
                 ].forEach((t) => Bt.bt(!0, t)),
                   (n = e.createElement("div")),
                   (n.id = c),
-                  (n.innerHTML = `<div><yt-icon id="icon" icon="${s}:${s}-info"></yt-icon><span id="close">×</span><div id="content"></div></div>`),
+                  (n.innerHTML = safeHTML(`<div><yt-icon id="icon" icon="${s}:${s}-info"></yt-icon><span id="close">×</span><div id="content"></div></div>`)),
                   n
                     .querySelector("#close")
                     .addEventListener("click", (t) => (it(t), b())),
                   (o = n.querySelector("#content"));
               }
             })(),
-            (o.innerHTML = i.content()),
+            (o.innerHTML = safeHTML(i.content())),
             n.setAttribute("dir", i.dir),
             (n.style = i.style(r)),
             i.callback?.(),
@@ -2303,7 +2315,7 @@
           $ = `<section><input><output style="display: none; width: 3em; text-align: right;"><span></span> %</output>${u}</section>`,
           y = n + "-case-sensitive",
           g = `<footer>${`<div><input type="checkbox" id="${y}"><label for="${y}">${L.messages.caseSensitive}</label></div>`}</footer>`;
-        (a.innerHTML = `<div id="drag-handle"><hr><hr></div><div id="content">${f}<div id="choice">${h}${m}${b}</div>${$}${g}</div>`),
+        (a.innerHTML = safeHTML(`<div id="drag-handle"><hr><hr></div><div id="content">${f}<div id="choice">${h}${m}${b}</div>${$}${g}</div>`)),
           a
             .querySelector("#content > header > #" + i)
             .addEventListener("tap", () => t.open(r, "_blank")),
@@ -2313,7 +2325,7 @@
           w = v.nextElementSibling;
         v.addEventListener("input", (t) => {
           (x.value = v.value),
-            "range" === v.type && (w.firstElementChild.innerHTML = x.value);
+            "range" === v.type && (w.firstElementChild.innerHTML = safeHTML(x.value));
         });
         const _ = a.querySelector(`#${y}`);
         (_.checked = x.option),
@@ -2353,7 +2365,7 @@
               (v.value = x.value),
               v.focus(),
               (w.style.display = "block"),
-              (w.firstElementChild.innerHTML = x.value),
+              (w.firstElementChild.innerHTML = safeHTML(x.value)),
               (_.checked = x.option),
               (_.nextElementSibling.textContent = "Filter umkehren");
           });
